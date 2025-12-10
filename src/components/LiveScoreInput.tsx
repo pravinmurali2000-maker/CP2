@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { TrendingUp, Save, CheckCircle } from 'lucide-react';
 import { useTournament } from '../context/TournamentContext';
 import { api } from '../lib/api';
 import type { Match } from '../App';
@@ -48,16 +47,11 @@ export function LiveScoreInput() {
     }
 
     try {
-      await api.post(`/matches/${matchId}/score`, {
+      const updatedTournament = await api.post(`/matches/${matchId}/score`, {
         home_score: parseInt(score.home_score),
         away_score: parseInt(score.away_score),
       });
 
-      // Optimistically update the UI by removing the match from the list
-      setLiveMatches(prev => prev.filter(m => m.id !== matchId));
-      
-      // Fetch fresh tournament data to update standings and context
-      const updatedTournament = await api.get(`/tournaments/${tournament.id}`);
       setTournament(updatedTournament);
 
       toast.success('Score saved successfully! Standings are being updated.');
@@ -73,7 +67,7 @@ export function LiveScoreInput() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <TrendingUp className="w-7 h-7 text-red-600" />
+            <span>-</span>
             Live Score Input
           </CardTitle>
           <CardDescription>
@@ -119,7 +113,7 @@ export function LiveScoreInput() {
                     disabled={loadingStates[match.id]}
                     className="w-full md:w-auto flex items-center gap-2"
                   >
-                    <Save className="w-4 h-4" />
+                    <span>Save</span>
                     {loadingStates[match.id] ? 'Saving...' : 'Save Final Score'}
                   </Button>
                 </div>
@@ -127,7 +121,7 @@ export function LiveScoreInput() {
             ))
           ) : (
             <div className="text-center text-gray-500 py-16">
-                <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
+                <span>✓</span>
                 <h3 className="text-lg font-semibold">All Matches Completed</h3>
                 <p className="text-sm">
                     There are no ongoing or scheduled matches to score.

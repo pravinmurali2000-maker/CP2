@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Calendar, Save, AlertCircle } from 'lucide-react';
 import { useTournament } from '../context/TournamentContext';
 import { api } from '../lib/api';
 import type { Match } from '../App';
@@ -45,14 +44,13 @@ export function MatchScheduling() {
     if (!matchToSave) return;
 
     try {
-      const updatedMatch = await api.put(`/matches/${matchToSave.id}`, {
+      const updatedTournament = await api.put(`/matches/${matchToSave.id}`, {
         date: new Date(matchToSave.date).toISOString(),
         time: matchToSave.time,
         venue: matchToSave.venue,
       });
 
       // Update the main tournament context
-      const updatedTournament = await api.get(`/tournaments/${tournament.id}`);
       setTournament(updatedTournament);
 
       toast.success(`Match ${matchToSave.home_team.name} vs ${matchToSave.away_team.name} updated!`);
@@ -68,7 +66,7 @@ export function MatchScheduling() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <Calendar className="w-7 h-7 text-purple-600" />
+            <span>Cal</span>
             Manual Match Scheduling
           </CardTitle>
           <CardDescription>
@@ -124,7 +122,7 @@ export function MatchScheduling() {
                           disabled={loadingStates[match.id]}
                           className="flex items-center gap-2"
                         >
-                          <Save className="w-4 h-4" />
+                          <span>Save</span>
                           {loadingStates[match.id] ? 'Saving...' : 'Save'}
                         </Button>
                       </TableCell>
@@ -135,7 +133,7 @@ export function MatchScheduling() {
             </div>
           ) : (
             <div className="text-center text-gray-500 py-16">
-              <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <span>Cal</span>
               <h3 className="text-lg font-semibold">No Matches Scheduled</h3>
               <p className="text-sm">
                 Generate a schedule from the Tournament Setup page to begin.

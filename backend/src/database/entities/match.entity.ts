@@ -32,14 +32,14 @@ export class Match {
   @Column()
   home_team_id: number;
 
-  @ManyToOne(() => Team)
+  @ManyToOne(() => Team, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'home_team_id' })
   home_team: Team;
 
   @Column()
   away_team_id: number;
 
-  @ManyToOne(() => Team)
+  @ManyToOne(() => Team, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'away_team_id' })
   away_team: Team;
 

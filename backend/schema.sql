@@ -9,7 +9,8 @@ CREATE TABLE `users` (
   `role` ENUM('admin', 'manager', 'viewer') NOT NULL,
   `team_id` INT,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`team_id`) REFERENCES `teams`(`id`) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- Tournaments Table
@@ -77,6 +78,3 @@ CREATE TABLE `notifications` (
   `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`tournament_id`) REFERENCES `tournaments`(`id`) ON DELETE CASCADE
 );
-
--- Add foreign key constraint from users to teams
-ALTER TABLE `users` ADD FOREIGN KEY (`team_id`) REFERENCES `teams`(`id`) ON DELETE SET NULL;

@@ -56,7 +56,7 @@ export class TournamentsService {
     return this.tournamentsRepository.save(tournament);
   }
 
-  async createTeam(tournamentId: number, createTeamDto: CreateTeamDto): Promise<Team> {
+  async createTeam(tournamentId: number, createTeamDto: CreateTeamDto): Promise<Tournament> {
     console.log('--- createTeam method called ---');
     console.log('tournamentId:', tournamentId);
     console.log('createTeamDto:', createTeamDto);
@@ -89,10 +89,7 @@ export class TournamentsService {
 
       await queryRunner.commitTransaction();
       
-      return await this.teamsRepository.findOneOrFail({ 
-        where: { id: savedTeam.id },
-        relations: ['players'],
-      });
+      return await this.findOne(tournamentId);
 
     } catch (err) {
       await queryRunner.rollbackTransaction();
@@ -121,7 +118,7 @@ export class TournamentsService {
     return this.playersRepository.save(newPlayer);
   }
 
-  async updateTeam(teamId: number, updateTeamDto: UpdateTeamDto): Promise<Team> {
+  async updateTeam(teamId: number, updateTeamDto: UpdateTeamDto): Promise<Tournament> {
     const team = await this.teamsRepository.findOneBy({ id: teamId });
     if (!team) {
       throw new NotFoundException(`Team with ID ${teamId} not found`);
@@ -145,15 +142,19 @@ export class TournamentsService {
       ...updateTeamDto,
     });
 
-    return this.teamsRepository.save(updatedTeam);
+    await this.teamsRepository.save(updatedTeam);
+
+    return this.findOne(team.tournament_id);
   }
 
-  async deleteTeam(teamId: number): Promise<{ deleted: boolean; affected?: number }> {
-    const result = await this.teamsRepository.delete(teamId);
-    if (result.affected === 0) {
-        throw new NotFoundException(`Team with ID ${teamId} not found`);
+  async deleteTeam(teamId: number): Promise<Tournament> {
+    const team = await this.teamsRepository.findOneBy({ id: teamId });
+    if (!team) {
+      throw new NotFoundException(`Team with ID ${teamId} not found`);
     }
-    return { deleted: true, affected: result.affected };
+    const tournamentId = team.tournament_id;
+    await this.teamsRepository.delete(teamId);
+    return this.findOne(tournamentId);
   }
 
   async generateSchedule(tournamentId: number, scheduleDto: GenerateScheduleDto): Promise<Match[]> {
@@ -212,9 +213,9 @@ export class TournamentsService {
     return this.matchesRepository.save(matchEntities);
   }
 
-  async clearSchedule(tournamentId: number): Promise<{ deleted: number }> {
-    const result = await this.matchesRepository.delete({ tournament_id: tournamentId });
-    return { deleted: result.affected || 0 };
+  async clearSchedule(tournamentId: number): Promise<Tournament> {
+    await this.matchesRepository.delete({ tournament_id: tournamentId });
+    return this.findOne(tournamentId);
   }
 
   async createNotification(tournamentId: number, createNotificationDto: CreateNotificationDto): Promise<Notification> {

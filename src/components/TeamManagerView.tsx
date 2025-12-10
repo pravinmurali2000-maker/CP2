@@ -5,12 +5,12 @@ import type { User, Team } from '../App';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from './ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
+import { Modal, ConfirmModal } from './ui/modal';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { toast } from 'sonner';
 import { AlertCircle } from 'lucide-react';
+import { api } from '../lib/api';
 
 interface TeamManagerViewProps {
   currentUser: User;
@@ -30,7 +30,6 @@ const StatCard = ({ icon, title, value, subtext }: { icon: React.ReactNode, titl
   </Card>
 );
 
-
 export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProps) {
   const { tournament, setTournament } = useTournament();
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
@@ -38,6 +37,7 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   if (!tournament) {
     return <div className="text-center p-8">Loading team data...</div>;
@@ -104,10 +104,9 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
       const updatedTournament = await api.get(`/tournaments/${tournament.id}`);
       setTournament(updatedTournament);
       toast.success(`Team "${deletingTeam.name}" deleted successfully!`);
-      // Since the team is deleted, the current user might no longer have a teamId
-      // This should ideally trigger a logout or a redirection to a page asking them to register/join a team
-      onNavigate('landing'); // Redirect to landing page after deletion
+      onNavigate('landing');
       setDeletingTeam(null);
+      setIsDeleteDialogOpen(false);
     } catch (err: any) {
       setError(err.message || 'Failed to delete team.');
       toast.error(err.message || 'Failed to delete team.');
@@ -126,68 +125,77 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
             <Button size="icon" variant="secondary" onClick={() => { setEditingTeam(team); setIsEditDialogOpen(true); }}>
               <Edit className="w-5 h-5" />
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="icon" variant="destructive" onClick={() => setDeletingTeam(team)}>
-                  <Trash2 className="w-5 h-5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    <strong> {deletingTeam?.name}</strong> and all associated players.
-                    You will also be logged out.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setDeletingTeam(null)}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteTeam}>Delete My Team</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <Button size="icon" variant="destructive" onClick={() => { setDeletingTeam(team); setIsDeleteDialogOpen(true); }}>
+              <Trash2 className="w-5 h-5" />
+            </Button>
           </div>
         </div>
         <p className="text-gray-300 text-sm">Managed by {team.manager_name} ({team.manager_email})</p>
       </div>
 
-      {/* Edit Team Dialog for Manager */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Team: {editingTeam?.name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleUpdateTeam} className="space-y-4 py-4">
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex gap-3">
-                <AlertCircle className="w-5 h-5" />
-                <p>{error}</p>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="editTeamName">Team Name</Label>
-              <Input id="editTeamName" value={editingTeam?.name || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, name: e.target.value} : null)} required />
+      {/* Edit Team Modal for Manager */}
+      <Modal
+        isOpen={isEditDialogOpen}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setEditingTeam(null);
+          setError('');
+        }}
+        title={`Edit Team: ${editingTeam?.name}`}
+        description="Update the team's details below and save your changes."
+      >
+        <form onSubmit={handleUpdateTeam} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex gap-3">
+              <AlertCircle className="w-5 h-5" />
+              <p>{error}</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="editManagerName">Manager's Name</Label>
-              <Input id="editManagerName" value={editingTeam?.manager_name || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager_name: e.target.value} : null)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="editManagerEmail">Manager's Email</Label>
-              <Input id="editManagerEmail" type="email" value={editingTeam?.manager_email || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager_email: e.target.value} : null)} required />
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="outline" onClick={() => setEditingTeam(null)}>Cancel</Button>
-              </DialogClose>
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div> // This is the missing closing div
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="editTeamName">Team Name</Label>
+            <Input id="editTeamName" value={editingTeam?.name || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, name: e.target.value} : null)} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editManagerName">Manager's Name</Label>
+            <Input id="editManagerName" value={editingTeam?.manager_name || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager_name: e.target.value} : null)} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editManagerEmail">Manager's Email</Label>
+            <Input id="editManagerEmail" type="email" value={editingTeam?.manager_email || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager_email: e.target.value} : null)} required />
+          </div>
+          <div className="flex gap-3 justify-end pt-4 border-t mt-6">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                setEditingTeam(null);
+                setError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setDeletingTeam(null);
+        }}
+        onConfirm={handleDeleteTeam}
+        title="Are you absolutely sure?"
+        description={`This action cannot be undone. This will permanently delete "${deletingTeam?.name}" and all associated players. You will also be logged out.`}
+        confirmText="Delete My Team"
+        cancelText="Cancel"
+        isDangerous={true}
+      />
+    </div>
   );
 }

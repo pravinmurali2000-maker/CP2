@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Save, Trophy, AlertCircle, Calendar, Trash2 } from 'lucide-react';
 import { useTournament } from '../context/TournamentContext';
 import { api } from '../lib/api';
 import { Button } from './ui/button';
@@ -102,7 +101,7 @@ export function TournamentSetup() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <Trophy className="w-7 h-7 text-green-600" />
+            <span>Trophy</span>
             Tournament Settings
           </CardTitle>
           <CardDescription>
@@ -113,7 +112,7 @@ export function TournamentSetup() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex gap-3">
-                <AlertCircle className="w-5 h-5" />
+                <span>!</span>
                 <p>{error}</p>
               </div>
             )}
@@ -137,7 +136,7 @@ export function TournamentSetup() {
             </div>
             <div className="flex justify-end">
               <Button type="submit" disabled={loading} className="flex items-center gap-2">
-                <Save className="w-4 h-4" />
+                <span>Save</span>
                 {loading ? 'Saving...' : 'Save Settings'}
               </Button>
             </div>
@@ -148,7 +147,7 @@ export function TournamentSetup() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <Calendar className="w-7 h-7 text-blue-600" />
+            <span>Cal</span>
             Schedule Management
           </CardTitle>
           <CardDescription>
@@ -189,7 +188,7 @@ export function TournamentSetup() {
                 className="flex-1 flex items-center gap-2"
                 disabled={scheduleLoading}
               >
-                <Calendar className="w-4 h-4" />
+                <span>Cal</span>
                 {scheduleLoading ? 'Generating...' : 'Generate Schedule'}
               </Button>
               <Button
@@ -199,14 +198,14 @@ export function TournamentSetup() {
                 className="flex-1 flex items-center gap-2"
                 disabled={scheduleLoading || tournament.matches.length === 0}
               >
-                <Trash2 className="w-4 h-4" />
+                <span>Trash</span>
                 {scheduleLoading ? 'Working...' : 'Clear Schedule'}
               </Button>
             </div>
           </form>
           {scheduleError && (
             <div className="mt-4 text-red-600 text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
+              <span>!</span>
               {scheduleError}
             </div>
           )}

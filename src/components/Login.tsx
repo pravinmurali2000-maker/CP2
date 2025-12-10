@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ArrowLeft, AlertCircle } from 'lucide-react';
 import type { User } from '../App';
 import { api, setToken } from '../lib/api';
 import { toast } from 'sonner';
@@ -50,14 +49,14 @@ export function Login({ role, onLogin, onBack }: LoginProps) {
           className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
           disabled={loading}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <span>&lt;</span>
           Back to Home
         </button>
 
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 md:p-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-              <Lock className="w-8 h-8 text-green-600" />
+              <span>Lock</span>
             </div>
             <h2 className="text-2xl text-gray-900 mb-2">
               {role === 'admin' ? 'Admin Login' : 'Manager Login'}
@@ -72,7 +71,7 @@ export function Login({ role, onLogin, onBack }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <span>!</span>
                 <div>
                   <p className="font-bold">Login Failed</p>
                   <p className="text-sm">{error}</p>
@@ -81,7 +80,7 @@ export function Login({ role, onLogin, onBack }: LoginProps) {
             )}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="w-5 h-5 text-gray-400" />
+                <span>Mail</span>
               </div>
               <input
                 type="email"
@@ -95,7 +94,7 @@ export function Login({ role, onLogin, onBack }: LoginProps) {
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="w-5 h-5 text-gray-400" />
+                <span>Lock</span>
               </div>
               <input
                 type="password"

@@ -6,6 +6,8 @@ import { UpdateScoreDto } from './dto/update-score.dto';
 import { UpdateMatchDto } from './dto/update-match.dto';
 import { StandingsService } from 'src/tournaments/services/standings.service';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
+import { TournamentsService } from 'src/tournaments/tournaments.service';
+import { Tournament } from 'src/database/entities/tournament.entity';
 
 @Injectable()
 export class MatchesService {
@@ -13,10 +15,11 @@ export class MatchesService {
     @InjectRepository(Match)
     private matchesRepository: Repository<Match>,
     private readonly standingsService: StandingsService,
+    private readonly tournamentsService: TournamentsService,
     private readonly realtimeGateway: RealtimeGateway,
   ) {}
 
-  async updateMatch(id: number, updateMatchDto: UpdateMatchDto): Promise<Match> {
+  async updateMatch(id: number, updateMatchDto: UpdateMatchDto): Promise<Tournament> {
     const match = await this.matchesRepository.preload({
       id: id,
       ...updateMatchDto,
@@ -24,10 +27,11 @@ export class MatchesService {
     if (!match) {
       throw new NotFoundException(`Match with ID ${id} not found`);
     }
-    return this.matchesRepository.save(match);
+    await this.matchesRepository.save(match);
+    return this.tournamentsService.findOne(match.tournament_id);
   }
 
-  async updateScore(id: number, updateScoreDto: UpdateScoreDto): Promise<Match> {
+  async updateScore(id: number, updateScoreDto: UpdateScoreDto): Promise<Tournament> {
     const match = await this.matchesRepository.findOneBy({ id });
     if (!match) {
       throw new NotFoundException(`Match with ID ${id} not found`);
@@ -44,6 +48,6 @@ export class MatchesService {
     // Broadcast the update via WebSocket
     this.realtimeGateway.broadcastScoreUpdate(match.tournament_id, newStandings);
 
-    return match;
+    return this.tournamentsService.findOne(match.tournament_id);
   }
 }

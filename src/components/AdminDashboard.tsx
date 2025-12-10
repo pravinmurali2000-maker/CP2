@@ -52,7 +52,7 @@ export function AdminDashboard({ currentUser, onNavigate }: AdminDashboardProps)
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 data-testid="admin-dashboard-title" className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-600 mt-1">
           Welcome back, {currentUser.name}! Here's an overview of the "{tournament.name}" tournament.
         </p>
@@ -68,7 +68,7 @@ export function AdminDashboard({ currentUser, onNavigate }: AdminDashboardProps)
 
       {/* Navigation Grid */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Management Console</h2>
+        <h2 data-testid="management-console-title" className="text-2xl font-bold text-gray-900 mb-4">Management Console</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <NavCard
             icon={<Settings className="w-6 h-6" />}

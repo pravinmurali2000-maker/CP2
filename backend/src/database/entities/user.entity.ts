@@ -4,18 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
 } from 'typeorm';
 import { Team } from './team.entity';
-
-// As per the design, the Role enum should be defined.
-// Let's create a shared enum for this.
-export enum Role {
-  Admin = 'admin',
-  Manager = 'manager',
-  Viewer = 'viewer',
-}
+import { Role } from 'src/common/enums/role.enum';
 
 
 @Entity('users')
@@ -41,7 +34,7 @@ export class User {
   @Column({ nullable: true })
   team_id?: number;
 
-  @OneToOne(() => Team)
+  @ManyToOne(() => Team, { onDelete: 'SET NULL', onUpdate: 'CASCADE' })
   @JoinColumn({ name: 'team_id' })
   team: Team;
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Bell, Send, AlertTriangle, Info, AlertCircle } from 'lucide-react';
 import { useTournament } from '../context/TournamentContext';
 import type { UserRole } from '../App';
 import { api } from '../lib/api';
@@ -68,7 +67,7 @@ export function Notifications({ userRole }: NotificationsProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
-              <Send className="w-6 h-6 text-blue-600" />
+              <span>Send</span>
               Send Notification
             </CardTitle>
             <CardDescription>
@@ -79,7 +78,7 @@ export function Notifications({ userRole }: NotificationsProps) {
             <form onSubmit={handleSend} className="space-y-4">
                {error && (
                 <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex gap-3">
-                  <AlertCircle className="w-5 h-5" />
+                  <span>!</span>
                   <p>{error}</p>
                 </div>
               )}
@@ -98,17 +97,17 @@ export function Notifications({ userRole }: NotificationsProps) {
                 <RadioGroup value={priority} onValueChange={(v: 'normal' | 'urgent') => setPriority(v)} className="flex items-center gap-6">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="normal" id="r1" />
-                    <Label htmlFor="r1" className="flex items-center gap-2"><Info className="w-4 h-4 text-gray-600" /> Normal</Label>
+                    <Label htmlFor="r1" className="flex items-center gap-2"><span>Info</span> Normal</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="urgent" id="r2" />
-                    <Label htmlFor="r2" className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-600" /> Urgent</Label>
+                    <Label htmlFor="r2" className="flex items-center gap-2"><span>!</span> Urgent</Label>
                   </div>
                 </RadioGroup>
               </div>
               <div className="flex justify-end">
                 <Button type="submit" disabled={loading} className="flex items-center gap-2">
-                  <Send className="w-4 h-4" />
+                  <span>Send</span>
                   {loading ? 'Sending...' : 'Send Broadcast'}
                 </Button>
               </div>
@@ -120,7 +119,7 @@ export function Notifications({ userRole }: NotificationsProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
-            <Bell className="w-6 h-6 text-gray-700" />
+            <span>Bell</span>
             Notification History
           </CardTitle>
           <CardDescription>
@@ -151,7 +150,7 @@ export function Notifications({ userRole }: NotificationsProps) {
             </div>
           ) : (
             <div className="text-center text-gray-500 py-16">
-              <Bell className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <span>Bell</span>
               <h3 className="text-lg font-semibold">No Notifications Yet</h3>
               <p className="text-sm">
                 Important updates and announcements will appear here.
