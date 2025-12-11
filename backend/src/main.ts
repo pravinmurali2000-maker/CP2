@@ -4,10 +4,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './database/entities/user.entity';
+import { Tournament } from './database/entities/tournament.entity';
 import * as bcrypt from 'bcrypt';
 
 async function seedDatabase(app) {
   const userRepository = app.get(getRepositoryToken(User));
+  const tournamentRepository = app.get(getRepositoryToken(Tournament));
   
   // Check if admin user exists
   const adminUser = await userRepository.findOne({ where: { email: 'admin@tournament.my' } });
@@ -42,9 +44,25 @@ async function seedDatabase(app) {
 
     const userEntities = userRepository.create(usersToCreate);
     await userRepository.save(userEntities);
-    console.log('Database seeding complete.');
+    console.log('Database seeding for users complete.');
   } else {
-    console.log('Database already seeded. Skipping.');
+    console.log('User data already seeded. Skipping.');
+  }
+
+  // Check if default tournament exists
+  const defaultTournament = await tournamentRepository.findOne({ where: { id: 1 } });
+  if (!defaultTournament) {
+    console.log('Seeding database with initial tournament...');
+    const tournamentEntity = tournamentRepository.create({
+      name: 'My Awesome Tournament',
+      format: 'Round Robin',
+      start_date: new Date().toISOString().split('T')[0],
+      status: 'draft',
+    });
+    await tournamentRepository.save(tournamentEntity);
+    console.log('Database seeding for tournament complete.');
+  } else {
+    console.log('Tournament data already seeded. Skipping.');
   }
 }
 
@@ -60,7 +78,7 @@ async function bootstrap() {
     transform: true,
   }));
   
-  // Seed the database with initial users
+  // Seed the database
   await seedDatabase(app);
 
   await app.listen(port);
