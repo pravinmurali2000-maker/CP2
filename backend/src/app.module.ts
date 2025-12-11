@@ -22,14 +22,13 @@ import { Notification } from './database/entities/notification.entity';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: 'mysql',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
+        type: 'postgres',
+        url: configService.get<string>('DATABASE_URL'),
         entities: [User, Tournament, Team, Player, Match, Notification],
         synchronize: true, // Should be false in production
+        ssl: {
+          rejectUnauthorized: false, // Required for Render Postgres
+        },
       }),
     }),
     AuthModule,
