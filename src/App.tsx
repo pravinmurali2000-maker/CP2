@@ -115,16 +115,9 @@ export default function App() {
       socket.emit('join_tournament_room', tournament.id);
     });
 
-    socket.on('match_score_updated', (standings: Standing[]) => {
-      toast.info('Standings have been updated!');
-      setTournament(prevTournament => {
-        if (!prevTournament) return null;
-        const updatedTeams = prevTournament.teams.map(team => {
-          const standingData = standings.find(s => s.teamId === team.id);
-          return standingData ? { ...team, ...standingData } : team;
-        });
-        return { ...prevTournament, teams: updatedTeams };
-      });
+    socket.on('tournament_updated', (updatedTournament: Tournament) => {
+      toast.success('Tournament data has been updated in real-time!');
+      setTournament(updatedTournament);
     });
 
     socket.on('notification_sent', (newNotification: Notification) => {

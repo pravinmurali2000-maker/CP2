@@ -9,6 +9,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Standing } from 'src/tournaments/services/standings.service';
 import { Notification } from 'src/database/entities/notification.entity';
+import { Tournament } from 'src/database/entities/tournament.entity';
 
 @WebSocketGateway({
   cors: {
@@ -58,5 +59,14 @@ export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGa
    */
   broadcastNotification(tournamentId: number, notification: Notification): void {
     this.server.to(`tournament-${tournamentId}`).emit('notification_sent', notification);
+  }
+
+  /**
+   * Broadcasts the entire updated tournament object.
+   * @param tournamentId The ID of the tournament.
+   * @param tournament The full tournament object.
+   */
+  broadcastTournamentUpdate(tournamentId: number, tournament: Tournament): void {
+    this.server.to(`tournament-${tournamentId}`).emit('tournament_updated', tournament);
   }
 }

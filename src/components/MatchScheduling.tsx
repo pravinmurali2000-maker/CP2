@@ -45,7 +45,7 @@ export function MatchScheduling() {
 
     try {
       const updatedTournament = await api.put(`/matches/${matchToSave.id}`, {
-        date: new Date(matchToSave.date).toISOString(),
+        date: matchToSave.date,
         time: matchToSave.time,
         venue: matchToSave.venue,
       });
@@ -122,7 +122,6 @@ export function MatchScheduling() {
                           disabled={loadingStates[match.id]}
                           className="flex items-center gap-2"
                         >
-                          <span>Save</span>
                           {loadingStates[match.id] ? 'Saving...' : 'Save'}
                         </Button>
                       </TableCell>

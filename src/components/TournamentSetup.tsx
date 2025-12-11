@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useTournament } from '../context/TournamentContext';
 import { api } from '../lib/api';
@@ -8,18 +8,28 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 
 export function TournamentSetup() {
-  const { tournament, setTournament, loading: tournamentLoading } = useTournament();
-
-  console.log('TournamentSetup - tournament:', tournament);
-  console.log('TournamentSetup - tournamentLoading:', tournamentLoading);
-
+  const { tournament, setTournament } = useTournament();
 
   const [formData, setFormData] = useState({
-    name: tournament?.name || '',
-    format: tournament?.format || '',
-    startDate: tournament ? new Date(tournament.start_date).toISOString().split('T')[0] : '',
-    endDate: tournament ? new Date(tournament.end_date).toISOString().split('T')[0] : '',
+    name: '',
+    format: '',
+    startDate: '',
+    endDate: '',
   });
+
+  useEffect(() => {
+    if (tournament && typeof tournament === 'object' && !Array.isArray(tournament)) {
+      const startDate = tournament.start_date ? new Date(tournament.start_date) : null;
+      const endDate = tournament.end_date ? new Date(tournament.end_date) : null;
+
+      setFormData({
+        name: tournament.name || '',
+        format: tournament.format || '',
+        startDate: startDate && !isNaN(startDate.getTime()) ? startDate.toISOString().split('T')[0] : '',
+        endDate: endDate && !isNaN(endDate.getTime()) ? endDate.toISOString().split('T')[0] : '',
+      });
+    }
+  }, [tournament]);
 
   const [scheduleConfig, setScheduleConfig] = useState({
     matchesPerDay: 3,
@@ -47,8 +57,6 @@ export function TournamentSetup() {
     try {
       const updatedTournament = await api.put(`/tournaments/${tournament.id}`, {
         ...formData,
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: new Date(formData.endDate).toISOString(),
       });
       setTournament(updatedTournament);
       toast.success('Tournament settings saved successfully!');

@@ -28,7 +28,9 @@ export class MatchesService {
       throw new NotFoundException(`Match with ID ${id} not found`);
     }
     await this.matchesRepository.save(match);
-    return this.tournamentsService.findOne(match.tournament_id);
+    const updatedTournament = await this.tournamentsService.findOne(match.tournament_id);
+    this.realtimeGateway.broadcastTournamentUpdate(match.tournament_id, updatedTournament);
+    return updatedTournament;
   }
 
   async updateScore(id: number, updateScoreDto: UpdateScoreDto): Promise<Tournament> {
@@ -41,13 +43,11 @@ export class MatchesService {
     match.away_score = updateScoreDto.away_score;
     match.status = MatchStatus.Completed;
     await this.matchesRepository.save(match);
+    
+    const updatedTournament = await this.tournamentsService.findOne(match.tournament_id);
 
-    // After updating the score, trigger the standings recalculation
-    const newStandings = await this.standingsService.calculate(match.tournament_id);
+    this.realtimeGateway.broadcastTournamentUpdate(match.tournament_id, updatedTournament);
 
-    // Broadcast the update via WebSocket
-    this.realtimeGateway.broadcastScoreUpdate(match.tournament_id, newStandings);
-
-    return this.tournamentsService.findOne(match.tournament_id);
+    return updatedTournament;
   }
 }

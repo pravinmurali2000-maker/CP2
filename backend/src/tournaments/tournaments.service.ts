@@ -46,10 +46,21 @@ export class TournamentsService {
   }
 
   async update(id: number, updateTournamentDto: UpdateTournamentDto): Promise<Tournament> {
+    const { startDate, endDate, ...rest } = updateTournamentDto;
+
+    const tournamentData: Partial<Tournament> = rest;
+    if (startDate) {
+      tournamentData.start_date = startDate;
+    }
+    if (endDate) {
+      tournamentData.end_date = endDate;
+    }
+    
     const tournament = await this.tournamentsRepository.preload({
       id: id,
-      ...updateTournamentDto,
+      ...tournamentData,
     });
+
     if (!tournament) {
       throw new NotFoundException(`Tournament with ID ${id} not found`);
     }
@@ -157,7 +168,7 @@ export class TournamentsService {
     return this.findOne(tournamentId);
   }
 
-  async generateSchedule(tournamentId: number, scheduleDto: GenerateScheduleDto): Promise<Match[]> {
+  async generateSchedule(tournamentId: number, scheduleDto: GenerateScheduleDto): Promise<Tournament> {
     const tournament = await this.findOne(tournamentId);
     if (tournament.teams.length < 2) {
       throw new BadRequestException('Not enough teams to generate a schedule. Need at least 2.');
@@ -210,7 +221,8 @@ export class TournamentsService {
     }
 
     const matchEntities = this.matchesRepository.create(newMatches);
-    return this.matchesRepository.save(matchEntities);
+    await this.matchesRepository.save(matchEntities);
+    return this.findOne(tournamentId);
   }
 
   async clearSchedule(tournamentId: number): Promise<Tournament> {
