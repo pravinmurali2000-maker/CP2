@@ -1,6 +1,6 @@
 // src/lib/api.ts
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://cp2-unfv.onrender.com/api'; // Your NestJS backend URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'; // Your NestJS backend URL
 
 let token: string | null = null;
 
