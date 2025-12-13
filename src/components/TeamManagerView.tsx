@@ -120,19 +120,17 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white rounded-2xl p-6 md:p-8 shadow-lg">
+      <div className="bg-white text-gray-900 rounded-2xl p-6 md:p-8 shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-3xl md:text-4xl font-bold">{team.name}</h1>
           <div className="flex gap-2">
-            <Button size="icon" variant="secondary" onClick={() => { setEditingTeam(team); setIsEditDialogOpen(true); }}>
-              <Edit className="w-5 h-5" />
-            </Button>
-            <Button size="icon" variant="destructive" onClick={() => { setDeletingTeam(team); setIsDeleteDialogOpen(true); }}>
-              <Trash2 className="w-5 h-5" />
+                        <Button size="icon" variant="secondary" onClick={() => { setEditingTeam(team); setIsEditDialogOpen(true); }}><Edit className="w-5 h-5 text-gray-700" /></Button>
+            <Button size="icon" variant="ghost" onClick={() => { setDeletingTeam(team); setIsDeleteDialogOpen(true); }}>
+              <Trash2 className="w-5 h-5 text-gray-900" />
             </Button>
           </div>
         </div>
-        <p className="text-gray-300 text-sm">Managed by {team.manager?.name} ({team.manager?.email})</p>
+        <p className="text-gray-700 text-sm">Managed by {team.manager?.name} ({team.manager?.email})</p>
       </div>
 
       {/* Edit Team Modal for Manager */}

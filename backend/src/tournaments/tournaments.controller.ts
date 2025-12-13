@@ -8,6 +8,7 @@ import { Role } from 'src/common/enums/role.enum';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto'; // <-- Added
 import { StandingsService } from './services/standings.service';
 import { GenerateScheduleDto } from './dto/generate-schedule.dto';
 import { CreatePlayerDto } from './dto/create-player.dto';
@@ -53,6 +54,27 @@ export class TournamentsController {
     @Body() createPlayerDto: CreatePlayerDto,
   ) {
     return this.tournamentsService.createPlayer(teamId, createPlayerDto);
+  }
+
+  @Put(':id/teams/:teamId/players/:playerId') // <-- Added
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager)
+  updatePlayer(
+    @Param('teamId', ParseIntPipe) teamId: number,
+    @Param('playerId', ParseIntPipe) playerId: number,
+    @Body() updatePlayerDto: UpdatePlayerDto,
+  ) {
+    return this.tournamentsService.updatePlayer(teamId, playerId, updatePlayerDto);
+  }
+
+  @Delete(':id/teams/:teamId/players/:playerId') // <-- Added
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin, Role.Manager)
+  deletePlayer(
+    @Param('teamId', ParseIntPipe) teamId: number,
+    @Param('playerId', ParseIntPipe) playerId: number,
+  ) {
+    return this.tournamentsService.deletePlayer(teamId, playerId);
   }
 
   @Put(':id/teams/:teamId')

@@ -5,6 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto'; // <-- Added
 import { Team } from 'src/database/entities/team.entity';
 import { Player } from 'src/database/entities/player.entity';
 import { User } from 'src/database/entities/user.entity';
@@ -81,10 +82,12 @@ export class TournamentsService {
     await queryRunner.startTransaction();
 
     try {
+      console.log('createTeam: Before checking for existing user.');
       // Check if user with this email already exists
       const existingUser = await queryRunner.manager.findOne(User, {
         where: { email: createTeamDto.manager_email },
       });
+      console.log('createTeam: After checking for existing user. Existing user:', existingUser);
 
       if (existingUser) {
         throw new BadRequestException(
@@ -92,10 +95,13 @@ export class TournamentsService {
         );
       }
 
+      console.log('createTeam: Before hashing password.');
       // Hash the password
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(createTeamDto.password, saltRounds);
+      console.log('createTeam: After hashing password.');
 
+      console.log('createTeam: Before creating new manager.');
       // Create a new user for the manager
       const newManager = this.usersRepository.create({
         name: createTeamDto.manager_name,
@@ -103,15 +109,20 @@ export class TournamentsService {
         password_hash: hashedPassword,
         role: Role.Manager,
       });
+      console.log('createTeam: Before saving new manager.');
       const savedManager = await queryRunner.manager.save(newManager);
+      console.log('createTeam: After saving new manager. Saved manager:', savedManager);
 
+      console.log('createTeam: Before creating new team.');
       const newTeam = this.teamsRepository.create({
         name: createTeamDto.name,
         tournament_id: tournament.id,
         manager_id: savedManager.id,
       });
       console.log('newTeam object before saving:', newTeam);
+      console.log('createTeam: Before saving new team.');
       const savedTeam = await queryRunner.manager.save(newTeam);
+      console.log('createTeam: After saving new team. Saved team:', savedTeam);
 
       if (createTeamDto.players && createTeamDto.players.length > 0) {
         const playersToSave = createTeamDto.players.map(playerDto => 
@@ -120,21 +131,31 @@ export class TournamentsService {
             team_id: savedTeam.id,
           })
         );
+        console.log('createTeam: Before saving players.');
         await queryRunner.manager.save(playersToSave);
+        console.log('createTeam: After saving players.');
       }
 
+      console.log('createTeam: Before committing transaction.');
       await queryRunner.commitTransaction();
+      console.log('createTeam: After committing transaction.');
       
-      return await this.findOne(tournamentId);
+      console.log('createTeam: Before calling findOne to return tournament.');
+      const finalTournament = await this.findOne(tournamentId);
+      console.log('createTeam: After calling findOne. Returning tournament.');
+      return finalTournament;
 
     } catch (err) {
+      console.error('createTeam: Error in transaction:', err);
       await queryRunner.rollbackTransaction();
       if (err instanceof BadRequestException) {
         throw err;
       }
       throw new InternalServerErrorException('Failed to create team. Transaction rolled back.');
     } finally {
+      console.log('createTeam: Releasing query runner.');
       await queryRunner.release();
+      console.log('createTeam: Query runner released.');
     }
   }
 
@@ -240,6 +261,57 @@ export class TournamentsService {
     const tournamentId = team.tournament_id;
     await this.teamsRepository.delete(teamId);
     return this.findOne(tournamentId);
+  }
+
+  async updatePlayer(
+    teamId: number,
+    playerId: number,
+    updatePlayerDto: UpdatePlayerDto,
+  ): Promise<Tournament> {
+    const player = await this.playersRepository.findOne({
+      where: { id: playerId, team_id: teamId },
+    });
+
+    if (!player) {
+      throw new NotFoundException(
+        `Player with ID ${playerId} not found in team ${teamId}`,
+      );
+    }
+
+    const updatedPlayer = await this.playersRepository.preload({
+      id: playerId,
+      ...updatePlayerDto,
+    });
+
+    await this.playersRepository.save(updatedPlayer);
+
+    // After updating player, return the updated tournament data
+    const team = await this.teamsRepository.findOneBy({ id: teamId });
+    if (!team) {
+      throw new NotFoundException(`Team with ID ${teamId} not found`);
+    }
+    return this.findOne(team.tournament_id);
+  }
+
+  async deletePlayer(teamId: number, playerId: number): Promise<Tournament> {
+    const player = await this.playersRepository.findOne({
+      where: { id: playerId, team_id: teamId },
+    });
+
+    if (!player) {
+      throw new NotFoundException(
+        `Player with ID ${playerId} not found in team ${teamId}`,
+      );
+    }
+
+    await this.playersRepository.remove(player);
+
+    // After deleting player, return the updated tournament data
+    const team = await this.teamsRepository.findOneBy({ id: teamId });
+    if (!team) {
+      throw new NotFoundException(`Team with ID ${teamId} not found`);
+    }
+    return this.findOne(team.tournament_id);
   }
 
   async generateSchedule(tournamentId: number, scheduleDto: GenerateScheduleDto): Promise<Tournament> {
