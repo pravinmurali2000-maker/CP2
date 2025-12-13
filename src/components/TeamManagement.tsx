@@ -120,8 +120,8 @@ export function TeamManagement() {
                 tournament.teams.map(team => (
                   <TableRow key={team.id}>
                     <TableCell className="font-medium">{team.name}</TableCell>
-                    <TableCell>{team.manager.name}</TableCell>
-                    <TableCell>{team.manager.email}</TableCell>
+                    <TableCell>{team.manager?.name}</TableCell>
+                    <TableCell>{team.manager?.email}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button 
                         variant="ghost" 
@@ -263,7 +263,7 @@ export function TeamManagement() {
             <Label htmlFor="editManagerName">Manager's Name</Label>
             <Input 
               id="editManagerName" 
-              value={editingTeam?.manager.name || ''} 
+              value={editingTeam?.manager?.name || ''} 
               onChange={e => setEditingTeam(prev => prev ? {...prev, manager: {...prev.manager, name: e.target.value}} : null)} 
               required 
             />
@@ -273,7 +273,7 @@ export function TeamManagement() {
             <Input 
               id="editManagerEmail" 
               type="email" 
-              value={editingTeam?.manager.email || ''} 
+              value={editingTeam?.manager?.email || ''} 
               onChange={e => setEditingTeam(prev => prev ? {...prev, manager: {...prev.manager, email: e.target.value}} : null)} 
               required 
             />
