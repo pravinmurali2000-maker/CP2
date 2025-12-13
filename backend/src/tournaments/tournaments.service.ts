@@ -174,57 +174,56 @@ export class TournamentsService {
         team.name = name;
       }
 
-      let currentManagerUser = team.manager;
       let managerNeedsUpdate = false;
+      let managerUser: User | null = null; // Renamed for clarity and to avoid confusion
 
       // Case 1: Team currently has no manager, but DTO provides manager details
-      if (!currentManagerUser && manager_name && manager_email) {
+      if (!team.manager && manager_name && manager_email) {
         const existingUser = await manager.findOne(User, { where: { email: manager_email } });
         if (existingUser) {
           throw new BadRequestException(`Email ${manager_email} is already in use by another user.`);
         }
         
         // Create a new manager user
-        currentManagerUser = this.usersRepository.create({
+        managerUser = this.usersRepository.create({
           name: manager_name,
           email: manager_email,
-          password_hash: 'placeholder', // Password should ideally be set in UI or generated and sent
+          password_hash: 'placeholder', 
           role: Role.Manager,
         });
-        await manager.save(currentManagerUser);
-        team.manager = currentManagerUser;
-        team.manager_id = currentManagerUser.id;
-        managerNeedsUpdate = true; // Mark as updated for transaction
+        await manager.save(managerUser);
+        team.manager = managerUser; // Link the new manager to the team
+        team.manager_id = managerUser.id;
+        managerNeedsUpdate = true;
       } 
       // Case 2: Team has an existing manager, and DTO provides updates
-      else if (currentManagerUser) {
-        let updateMade = false;
+      else if (team.manager) {
+        managerUser = team.manager; // Assign existing manager to managerUser
+        let updateMadeToManager = false;
 
         // Update name if manager_name is explicitly provided in the DTO and is a non-empty string
         if (updateTeamDto.manager_name !== undefined && updateTeamDto.manager_name !== null && updateTeamDto.manager_name.trim() !== '') {
-          currentManagerUser.name = updateTeamDto.manager_name;
-          updateMade = true;
+          managerUser.name = updateTeamDto.manager_name;
+          updateMadeToManager = true;
         }
 
         // Update email if manager_email is explicitly provided in the DTO and is a non-empty string
         if (updateTeamDto.manager_email !== undefined && updateTeamDto.manager_email !== null && updateTeamDto.manager_email.trim() !== '') {
           // Check for email collision only if email is provided and differs
-          if (currentManagerUser.email !== updateTeamDto.manager_email) {
+          if (managerUser.email !== updateTeamDto.manager_email) {
             const existingUser = await manager.findOne(User, { where: { email: updateTeamDto.manager_email } });
-            if (existingUser && existingUser.id !== currentManagerUser.id) {
+            if (existingUser && existingUser.id !== managerUser.id) {
               throw new BadRequestException(`Email ${updateTeamDto.manager_email} is already in use by another user.`);
             }
           }
-          currentManagerUser.email = updateTeamDto.manager_email;
-          updateMade = true;
+          managerUser.email = updateTeamDto.manager_email;
+          updateMadeToManager = true;
         }
-        managerNeedsUpdate = updateMade;
+        managerNeedsUpdate = updateMadeToManager;
       }
-      // Note: If team.manager is null and no new manager details are provided in DTO, 
-      // manager remains null/unassigned, which is valid.
       
-      if (managerNeedsUpdate && currentManagerUser) {
-        await manager.save(currentManagerUser);
+      if (managerNeedsUpdate && managerUser) {
+        await manager.save(managerUser);
       }
       
       await manager.save(team);
