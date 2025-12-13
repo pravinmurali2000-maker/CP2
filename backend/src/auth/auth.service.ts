@@ -19,7 +19,10 @@ export class AuthService {
     console.log('Email:', email);
     console.log('Password:', pass);
     
-    const user = await this.usersRepository.findOneBy({ email });
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      relations: ['teams'], // Eager load the teams relation
+    });
     console.log('User found in DB:', user);
 
     if (user) {
@@ -51,6 +54,7 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+        teams: user.teams, // Include teams in the returned user object
       }
     };
   }

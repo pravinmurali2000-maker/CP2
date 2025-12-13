@@ -43,7 +43,9 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
     return <div className="text-center p-8">Loading team data...</div>;
   }
 
-  const team = tournament.teams.find(t => t.id === currentUser.teamId);
+  const team = currentUser.teams && currentUser.teams.length > 0
+    ? tournament.teams.find(t => t.id === currentUser.teams[0].id)
+    : null;
 
   if (!team) {
     return (
@@ -80,8 +82,8 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
     try {
       const updatedTournament = await api.put(`/tournaments/${tournament.id}/teams/${editingTeam.id}`, {
         name: editingTeam.name,
-        manager_name: editingTeam.manager_name,
-        manager_email: editingTeam.manager_email,
+        manager_name: editingTeam.manager.name,
+        manager_email: editingTeam.manager.email,
       });
       setTournament(updatedTournament);
       toast.success(`Team "${editingTeam.name}" updated successfully!`);
@@ -130,7 +132,7 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
             </Button>
           </div>
         </div>
-        <p className="text-gray-300 text-sm">Managed by {team.manager_name} ({team.manager_email})</p>
+        <p className="text-gray-300 text-sm">Managed by {team.manager?.name} ({team.manager?.email})</p>
       </div>
 
       {/* Edit Team Modal for Manager */}
@@ -157,11 +159,11 @@ export function TeamManagerView({ currentUser, onNavigate }: TeamManagerViewProp
           </div>
           <div className="space-y-2">
             <Label htmlFor="editManagerName">Manager's Name</Label>
-            <Input id="editManagerName" value={editingTeam?.manager_name || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager_name: e.target.value} : null)} required />
+            <Input id="editManagerName" value={editingTeam?.manager?.name || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager: {...prev.manager, name: e.target.value}} : null)} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="editManagerEmail">Manager's Email</Label>
-            <Input id="editManagerEmail" type="email" value={editingTeam?.manager_email || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager_email: e.target.value} : null)} required />
+            <Input id="editManagerEmail" type="email" value={editingTeam?.manager?.email || ''} onChange={e => setEditingTeam(prev => prev ? {...prev, manager: {...prev.manager, email: e.target.value}} : null)} required />
           </div>
           <div className="flex gap-3 justify-end pt-4 border-t mt-6">
             <Button 

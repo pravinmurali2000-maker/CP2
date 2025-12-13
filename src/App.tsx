@@ -25,7 +25,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  teamId?: number;
+  teams?: Team[];
 }
 
 export interface Tournament {
