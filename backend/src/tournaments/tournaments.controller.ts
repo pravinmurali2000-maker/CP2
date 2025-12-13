@@ -103,6 +103,6 @@ export class TournamentsController {
 
   @Get(':id/standings')
   getStandings(@Param('id', ParseIntPipe) id: number) {
-    return this.standingsService.calculate(id);
+    return this.standingsService.getStandings(id);
   }
 }

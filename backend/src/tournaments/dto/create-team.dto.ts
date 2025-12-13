@@ -1,5 +1,5 @@
 // backend/src/tournaments/dto/create-team.dto.ts
-import { IsString, IsEmail, IsNotEmpty, IsArray, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsArray, IsOptional, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreatePlayerDto } from './create-player.dto';
 
@@ -15,6 +15,11 @@ export class CreateTeamDto {
   @IsEmail()
   @IsNotEmpty()
   manager_email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(8)
+  password;
 
   @IsOptional()
   @IsArray()

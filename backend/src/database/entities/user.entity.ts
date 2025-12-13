@@ -4,12 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Team } from './team.entity';
 import { Role } from 'src/common/enums/role.enum';
-
 
 @Entity('users')
 export class User {
@@ -31,12 +29,8 @@ export class User {
   })
   role: Role;
 
-  @Column({ nullable: true })
-  team_id?: number;
-
-  @ManyToOne(() => Team, { onDelete: 'SET NULL', onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'team_id' })
-  team: Team;
+  @OneToMany(() => Team, (team) => team.manager)
+  teams: Team[];
 
   @CreateDateColumn()
   created_at: Date;

@@ -13,7 +13,7 @@ import type { Team } from '../App';
 
 export function TeamManagement() {
   const { tournament, setTournament } = useTournament();
-  const [newTeam, setNewTeam] = useState({ name: '', manager_name: '', manager_email: '' });
+  const [newTeam, setNewTeam] = useState({ name: '', manager_name: '', manager_email: '', password: '' });
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
   const [loading, setLoading] = useState(false);
@@ -34,7 +34,7 @@ export function TeamManagement() {
       const updatedTournament = await api.post(`/tournaments/${tournament.id}/teams`, newTeam);
       setTournament(updatedTournament);
       toast.success(`Team "${newTeam.name}" created successfully!`);
-      setNewTeam({ name: '', manager_name: '', manager_email: '' });
+      setNewTeam({ name: '', manager_name: '', manager_email: '', password: '' });
       setIsAddDialogOpen(false);
     } catch (err: any) {
       setError(err.message || 'Failed to create team.');
@@ -52,8 +52,8 @@ export function TeamManagement() {
     try {
       const updatedTournament = await api.put(`/tournaments/${tournament.id}/teams/${editingTeam.id}`, {
         name: editingTeam.name,
-        manager_name: editingTeam.manager_name,
-        manager_email: editingTeam.manager_email,
+        manager_name: editingTeam.manager.name,
+        manager_email: editingTeam.manager.email,
       });
       setTournament(updatedTournament);
       toast.success(`Team "${editingTeam.name}" updated successfully!`);
@@ -80,8 +80,6 @@ export function TeamManagement() {
     } catch (err: any) {
       setError(err.message || 'Failed to delete team.');
       toast.error(err.message || 'Failed to delete team.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -122,8 +120,8 @@ export function TeamManagement() {
                 tournament.teams.map(team => (
                   <TableRow key={team.id}>
                     <TableCell className="font-medium">{team.name}</TableCell>
-                    <TableCell>{team.manager_name}</TableCell>
-                    <TableCell>{team.manager_email}</TableCell>
+                    <TableCell>{team.manager.name}</TableCell>
+                    <TableCell>{team.manager.email}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button 
                         variant="ghost" 
@@ -206,6 +204,16 @@ export function TeamManagement() {
               required 
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input 
+              id="password" 
+              type="password" 
+              value={newTeam.password} 
+              onChange={e => setNewTeam({...newTeam, password: e.target.value})} 
+              required 
+            />
+          </div>
           <div className="flex gap-3 justify-end pt-4">
             <Button 
               type="button" 
@@ -255,8 +263,8 @@ export function TeamManagement() {
             <Label htmlFor="editManagerName">Manager's Name</Label>
             <Input 
               id="editManagerName" 
-              value={editingTeam?.manager_name || ''} 
-              onChange={e => setEditingTeam(prev => prev ? {...prev, manager_name: e.target.value} : null)} 
+              value={editingTeam?.manager.name || ''} 
+              onChange={e => setEditingTeam(prev => prev ? {...prev, manager: {...prev.manager, name: e.target.value}} : null)} 
               required 
             />
           </div>
@@ -265,8 +273,8 @@ export function TeamManagement() {
             <Input 
               id="editManagerEmail" 
               type="email" 
-              value={editingTeam?.manager_email || ''} 
-              onChange={e => setEditingTeam(prev => prev ? {...prev, manager_email: e.target.value} : null)} 
+              value={editingTeam?.manager.email || ''} 
+              onChange={e => setEditingTeam(prev => prev ? {...prev, manager: {...prev.manager, email: e.target.value}} : null)} 
               required 
             />
           </div>

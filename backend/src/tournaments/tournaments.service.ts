@@ -14,6 +14,8 @@ import { Match } from 'src/database/entities/match.entity';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { Notification } from 'src/database/entities/notification.entity';
 import { RealtimeGateway } from 'src/realtime/realtime.gateway';
+import * as bcrypt from 'bcrypt';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class TournamentsService {
@@ -79,11 +81,34 @@ export class TournamentsService {
     await queryRunner.startTransaction();
 
     try {
+      // Check if user with this email already exists
+      const existingUser = await queryRunner.manager.findOne(User, {
+        where: { email: createTeamDto.manager_email },
+      });
+
+      if (existingUser) {
+        throw new BadRequestException(
+          `A user with email ${createTeamDto.manager_email} already exists.`,
+        );
+      }
+
+      // Hash the password
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(createTeamDto.password, saltRounds);
+
+      // Create a new user for the manager
+      const newManager = this.usersRepository.create({
+        name: createTeamDto.manager_name,
+        email: createTeamDto.manager_email,
+        password_hash: hashedPassword,
+        role: Role.Manager,
+      });
+      const savedManager = await queryRunner.manager.save(newManager);
+
       const newTeam = this.teamsRepository.create({
         name: createTeamDto.name,
-        manager_name: createTeamDto.manager_name,
-        manager_email: createTeamDto.manager_email,
         tournament_id: tournament.id,
+        manager_id: savedManager.id,
       });
       console.log('newTeam object before saving:', newTeam);
       const savedTeam = await queryRunner.manager.save(newTeam);
@@ -104,6 +129,9 @@ export class TournamentsService {
 
     } catch (err) {
       await queryRunner.rollbackTransaction();
+      if (err instanceof BadRequestException) {
+        throw err;
+      }
       throw new InternalServerErrorException('Failed to create team. Transaction rolled back.');
     } finally {
       await queryRunner.release();
@@ -130,32 +158,47 @@ export class TournamentsService {
   }
 
   async updateTeam(teamId: number, updateTeamDto: UpdateTeamDto): Promise<Tournament> {
-    const team = await this.teamsRepository.findOneBy({ id: teamId });
-    if (!team) {
-      throw new NotFoundException(`Team with ID ${teamId} not found`);
-    }
+    return this.dataSource.transaction(async manager => {
+      const team = await manager.findOne(Team, {
+        where: { id: teamId },
+        relations: ['manager'],
+      });
 
-    // If manager_email is being updated, also update the associated user's email
-    if (updateTeamDto.manager_email && updateTeamDto.manager_email !== team.manager_email) {
-      const user = await this.usersRepository.findOneBy({ email: team.manager_email });
-      if (user) {
-        user.email = updateTeamDto.manager_email;
-        await this.usersRepository.save(user);
-      } else {
-        // Handle case where user not found, e.g., create a new user or log a warning
-        // For now, we'll just log a warning and proceed with team update
-        console.warn(`User with email ${team.manager_email} not found for team ${teamId}. Only team's manager_email will be updated.`);
+      if (!team) {
+        throw new NotFoundException(`Team with ID ${teamId} not found`);
       }
-    }
 
-    const updatedTeam = await this.teamsRepository.preload({
-      id: teamId,
-      ...updateTeamDto,
+      const { name, manager_name, manager_email } = updateTeamDto;
+
+      if (name) {
+        team.name = name;
+      }
+
+      const managerUser = team.manager;
+      let managerNeedsUpdate = false;
+
+      if (manager_name && manager_name !== managerUser.name) {
+        managerUser.name = manager_name;
+        managerNeedsUpdate = true;
+      }
+
+      if (manager_email && manager_email !== managerUser.email) {
+        const existingUser = await manager.findOne(User, { where: { email: manager_email } });
+        if (existingUser && existingUser.id !== managerUser.id) {
+          throw new BadRequestException(`Email ${manager_email} is already in use.`);
+        }
+        managerUser.email = manager_email;
+        managerNeedsUpdate = true;
+      }
+      
+      if (managerNeedsUpdate) {
+        await manager.save(managerUser);
+      }
+      
+      await manager.save(team);
+
+      return this.findOne(team.tournament_id);
     });
-
-    await this.teamsRepository.save(updatedTeam);
-
-    return this.findOne(team.tournament_id);
   }
 
   async deleteTeam(teamId: number): Promise<Tournament> {

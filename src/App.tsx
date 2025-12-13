@@ -43,8 +43,7 @@ export interface Tournament {
 export interface Team {
   id: number;
   name: string;
-  manager_name: string;
-  manager_email: string;
+  manager: User;
   players: Player[];
   points?: number;
   played?: number;
