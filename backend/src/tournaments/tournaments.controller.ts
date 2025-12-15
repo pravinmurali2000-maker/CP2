@@ -123,6 +123,16 @@ export class TournamentsController {
     return this.tournamentsService.createNotification(id, createNotificationDto);
   }
 
+  @Delete(':id/notifications/:notificationId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.Admin)
+  deleteNotification(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('notificationId', ParseIntPipe) notificationId: number,
+  ) {
+    return this.tournamentsService.deleteNotification(id, notificationId);
+  }
+
   @Get(':id/standings')
   getStandings(@Param('id', ParseIntPipe) id: number) {
     return this.standingsService.getStandings(id);

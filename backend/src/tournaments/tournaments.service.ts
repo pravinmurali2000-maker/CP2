@@ -389,5 +389,24 @@ export class TournamentsService {
 
     return savedNotification;
   }
+
+  async deleteNotification(tournamentId: number, notificationId: number): Promise<Tournament> {
+    const notification = await this.notificationsRepository.findOne({
+      where: { id: notificationId, tournament_id: tournamentId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException(
+        `Notification with ID ${notificationId} not found in tournament ${tournamentId}`,
+      );
+    }
+
+    await this.notificationsRepository.remove(notification);
+
+    const updatedTournament = await this.findOne(tournamentId);
+    this.realtimeGateway.broadcastTournamentUpdate(tournamentId, updatedTournament);
+    
+    return updatedTournament;
+  }
 }
 

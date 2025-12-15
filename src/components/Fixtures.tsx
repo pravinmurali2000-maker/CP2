@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Clock } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowLeft } from 'lucide-react';
 import { useTournament } from '../context/TournamentContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 
-export function Fixtures() {
+export function Fixtures({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { tournament } = useTournament();
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed'>('all');
 
@@ -37,11 +37,17 @@ export function Fixtures() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <Calendar className="w-7 h-7 text-green-600" />
-            Match Fixtures
-          </CardTitle>
+        <CardHeader className="p-6">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-3">
+              <Calendar className="w-7 h-7 text-green-600" />
+              Match Fixtures
+            </CardTitle>
+            <button onClick={() => onNavigate('landing')} className="flex items-center gap-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+          </div>
           <CardDescription>
             View all scheduled and completed matches for {tournament.name}.
           </CardDescription>

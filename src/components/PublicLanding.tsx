@@ -42,17 +42,21 @@ export function PublicLanding({ tournament, onNavigate }: PublicLandingProps) {
               </div>
             </div>
           </div>
-          <div className={`px-3 py-1 rounded-full text-xs ${
-            tournament.status === 'live' ? 'bg-red-500' :
-            tournament.status === 'draft' ? 'bg-yellow-500' :
-            'bg-gray-500'
+          <div className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-2 ${
+            (tournament.status === 'live' || tournament.status === 'draft') ? 'bg-green-500 text-white' :
+            'bg-gray-100 text-gray-800'
           }`}>
-            {tournament.status.toUpperCase()}
+            {(tournament.status === 'live' || tournament.status === 'draft') && (
+              <span className="h-2 w-2 rounded-full bg-red-500 animate-blink"></span>
+            )}
+            <span className="leading-none">
+              {(tournament.status === 'live' || tournament.status === 'draft') ? 'LIVE' : tournament.status.toUpperCase()}
+            </span>
           </div>
         </div>
         
         <div className="text-sm text-green-100 mb-6">
-          {new Date(tournament.start_date).toLocaleDateString('en-MY', { month: 'long', day: 'numeric' })} - {new Date(tournament.end_date).toLocaleDateString('en-MY', { month: 'long', day: 'numeric', year: 'numeric' })}
+          {tournament.startDate && !isNaN(new Date(tournament.startDate).getTime()) ? new Date(tournament.startDate).getFullYear() : '2025'}
         </div>
 
         {/* Login Buttons */}

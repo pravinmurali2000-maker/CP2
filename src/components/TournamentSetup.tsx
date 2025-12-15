@@ -107,7 +107,7 @@ export function TournamentSetup() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <CardTitle className="flex items-center gap-3">
             <span>Trophy</span>
             Tournament Settings
@@ -153,7 +153,7 @@ export function TournamentSetup() {
       </Card>
       
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <CardTitle className="flex items-center gap-3">
             <span>Cal</span>
             Schedule Management

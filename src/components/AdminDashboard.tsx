@@ -12,12 +12,14 @@ interface AdminDashboardProps {
 
 const StatCard = ({ icon, title, value }: { icon: React.ReactNode, title: string, value: string | number }) => (
   <Card>
-    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+    <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
       {icon}
+      <div>
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className="text-2xl font-bold">{value}</div>
+      </div>
     </CardHeader>
     <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
     </CardContent>
   </Card>
 );
@@ -25,7 +27,7 @@ const StatCard = ({ icon, title, value }: { icon: React.ReactNode, title: string
 const NavCard = ({ icon, title, description, onClick }: { icon: React.ReactNode, title: string, description: string, onClick: () => void }) => (
   <button
     onClick={onClick}
-    className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-green-500 transition-all text-left flex flex-col justify-between"
+    className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-green-500 transition-all text-left flex flex-col justify-between m-4"
   >
     <div>
       <div className="bg-green-100 text-green-600 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
@@ -60,14 +62,13 @@ export function AdminDashboard({ currentUser, onNavigate }: AdminDashboardProps)
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard icon={<Users className="h-5 w-5 text-blue-500" />} title="Total Teams" value={totalTeams} />
-        <StatCard icon={<Trophy className="h-5 w-5 text-green-500" />} title="Completed Matches" value={completedMatches} />
-        <StatCard icon={<Calendar className="h-5 w-5 text-orange-500" />} title="Upcoming Matches" value={upcomingMatches} />
-        <StatCard icon={<Clock className="h-5 w-5 text-red-500" />} title="Status" value={<span className="capitalize">{tournament.status}</span>} />
+        <StatCard icon={<Users className="h-6 w-6 text-blue-500" />} title="Total Teams" value={totalTeams} />
+        <StatCard icon={<Trophy className="h-6 w-6 text-green-500" />} title="Completed Matches" value={completedMatches} />
+        <StatCard icon={<Calendar className="h-6 w-6 text-orange-500" />} title="Upcoming Matches" value={upcomingMatches} />
       </div>
 
       {/* Navigation Grid */}
-      <div>
+      <div className="mt-8">
         <h2 data-testid="management-console-title" className="text-2xl font-bold text-gray-900 mb-4">Management Console</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <NavCard

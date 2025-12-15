@@ -165,6 +165,12 @@ export default function App() {
     if (currentPage === 'landing') {
       return <PublicLanding tournament={tournament} onNavigate={handleNavigate} />;
     }
+    if (currentPage === 'standings') {
+      return <Standings onNavigate={handleNavigate} />;
+    }
+    if (currentPage === 'fixtures') {
+      return <Fixtures onNavigate={handleNavigate} />;
+    }
 
     if (currentPage === 'login-admin' || currentPage === 'login-manager') {
       return (
@@ -196,11 +202,11 @@ export default function App() {
         case 'notifications':
           return <Notifications userRole={currentUser.role} />;
         case 'standings':
-          return <Standings />;
+          return <Standings onNavigate={handleNavigate} />;
         case 'fixtures':
-          return <Fixtures />;
+          return <Fixtures onNavigate={handleNavigate} />;
         default:
-          return <AdminDashboard onNavigate={handleNavigate} />;
+          return <AdminDashboard currentUser={currentUser} onNavigate={handleNavigate} />;
       }
     }
 
@@ -212,9 +218,9 @@ export default function App() {
         case 'register':
           return <TeamRegistration currentUser={currentUser} />;
         case 'standings':
-          return <Standings />;
+          return <Standings onNavigate={handleNavigate} />;
         case 'fixtures':
-          return <Fixtures />;
+          return <Fixtures onNavigate={handleNavigate} />;
         case 'notifications':
           return <Notifications userRole={currentUser.role} />;
         default:

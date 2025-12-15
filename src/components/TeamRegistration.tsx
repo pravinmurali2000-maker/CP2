@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Modal, ConfirmModal } from './ui/modal';
 
 interface TeamRegistrationProps {
   currentUser: User;
@@ -17,14 +18,20 @@ interface TeamRegistrationProps {
 export function TeamRegistration({ currentUser }: TeamRegistrationProps) {
   const { tournament, setTournament } = useTournament();
   const [newPlayer, setNewPlayer] = useState({ name: '', number: '', position: '' });
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null); // New state
+  const [deletingPlayer, setDeletingPlayer] = useState<Player | null>(null); // New state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isEditPlayerDialogOpen, setIsEditPlayerDialogOpen] = useState(false); // New state
+  const [isDeletePlayerDialogOpen, setIsDeletePlayerDialogOpen] = useState(false); // New state
 
   if (!tournament) {
     return <div className="text-center p-8">Loading registration form...</div>;
   }
 
-  const team = tournament.teams.find(t => t.id === currentUser.teamId);
+  const team = currentUser.teams && currentUser.teams.length > 0
+    ? tournament.teams.find(t => t.id === currentUser.teams[0].id)
+    : null;
 
   if (!team) {
     return (
@@ -70,10 +77,63 @@ export function TeamRegistration({ currentUser }: TeamRegistrationProps) {
     }
   };
 
+  const handleUpdatePlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlayer) return;
+    setLoading(true);
+    setError('');
+
+    if (!editingPlayer.name || !editingPlayer.number) {
+      setError('Player name and number are required.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const updatedTournament = await api.put(
+        `/tournaments/${tournament.id}/teams/${team.id}/players/${editingPlayer.id}`,
+        {
+          name: editingPlayer.name,
+          number: editingPlayer.number,
+          position: editingPlayer.position,
+        },
+      );
+      setTournament(updatedTournament);
+      toast.success(`Player "${editingPlayer.name}" updated successfully!`);
+      setEditingPlayer(null);
+      setIsEditPlayerDialogOpen(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update player.');
+      toast.error(err.message || 'Failed to update player.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePlayerConfirm = async () => {
+    if (!deletingPlayer) return;
+    setLoading(true);
+    setError('');
+    try {
+      const updatedTournament = await api.delete(
+        `/tournaments/${tournament.id}/teams/${team.id}/players/${deletingPlayer.id}`,
+      );
+      setTournament(updatedTournament);
+      toast.success(`Player "${deletingPlayer.name}" deleted successfully!`);
+      setDeletingPlayer(null);
+      setIsDeletePlayerDialogOpen(false);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete player.');
+      toast.error(err.message || 'Failed to delete player.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <CardTitle className="flex items-center gap-3">
             <UserPlus className="w-7 h-7 text-green-600" />
             Player Registration
@@ -135,10 +195,25 @@ export function TeamRegistration({ currentUser }: TeamRegistrationProps) {
                       <TableCell>{player.name}</TableCell>
                       <TableCell>{player.position}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="mr-2" disabled>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="mr-2"
+                          onClick={() => {
+                            setEditingPlayer(player);
+                            setIsEditPlayerDialogOpen(true);
+                          }}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" disabled>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setDeletingPlayer(player);
+                            setIsDeletePlayerDialogOpen(true);
+                          }}
+                        >
                           <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </TableCell>
@@ -153,10 +228,88 @@ export function TeamRegistration({ currentUser }: TeamRegistrationProps) {
                 )}
               </TableBody>
             </Table>
-             <p className="text-xs text-gray-500 mt-4">* Edit and Delete functionality will be added soon.</p>
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Player Modal */}
+      <Modal
+        isOpen={isEditPlayerDialogOpen}
+        onClose={() => {
+          setIsEditPlayerDialogOpen(false);
+          setEditingPlayer(null);
+          setError('');
+        }}
+        title={`Edit Player: ${editingPlayer?.name}`}
+        description="Update player details below."
+      >
+        <form onSubmit={handleUpdatePlayer} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg flex gap-3">
+              <AlertCircle className="w-5 h-5" />
+              <p>{error}</p>
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="editPlayerName">Player Name</Label>
+            <Input
+              id="editPlayerName"
+              value={editingPlayer?.name || ''}
+              onChange={e => setEditingPlayer(prev => prev ? {...prev, name: e.target.value} : null)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editPlayerNumber">Number</Label>
+            <Input
+              id="editPlayerNumber"
+              type="number"
+              value={editingPlayer?.number || ''}
+              onChange={e => setEditingPlayer(prev => prev ? {...prev, number: parseInt(e.target.value)} : null)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editPlayerPosition">Position</Label>
+            <Input
+              id="editPlayerPosition"
+              value={editingPlayer?.position || ''}
+              onChange={e => setEditingPlayer(prev => prev ? {...prev, position: e.target.value} : null)}
+            />
+          </div>
+          <div className="flex gap-3 justify-end pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setIsEditPlayerDialogOpen(false);
+                setEditingPlayer(null);
+                setError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Player Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeletePlayerDialogOpen}
+        onClose={() => {
+          setIsDeletePlayerDialogOpen(false);
+          setDeletingPlayer(null);
+        }}
+        onConfirm={handleDeletePlayerConfirm}
+        title="Are you absolutely sure?"
+        description={`This action cannot be undone. This will permanently delete player "${deletingPlayer?.name}".`}
+        confirmText="Yes, delete player"
+        cancelText="Cancel"
+        isDangerous={true}
+      />
     </div>
   );
 }

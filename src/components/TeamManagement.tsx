@@ -86,7 +86,7 @@ export function TeamManagement() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-3">

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, ArrowLeft } from 'lucide-react';
 import { useTournament } from '../context/TournamentContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
-export function Standings() {
+export function Standings({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { tournament } = useTournament();
 
   if (!tournament) {
@@ -27,11 +27,17 @@ export function Standings() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-lg">
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="w-6 h-6" />
-            <h2>League Standings</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trophy className="w-6 h-6" />
+              <h2 className="text-lg">League Standings</h2>
+            </div>
+            <button onClick={() => onNavigate('landing')} className="flex items-center gap-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
           </div>
-          <div className="text-green-100 text-sm">
+          <div className="text-green-100 text-sm mt-2">
             {tournament.name} • {tournament.format}
           </div>
         </div>

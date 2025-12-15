@@ -64,7 +64,7 @@ export function MatchScheduling() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <Card>
-        <CardHeader>
+        <CardHeader className="p-6">
           <CardTitle className="flex items-center gap-3">
             <span>Cal</span>
             Manual Match Scheduling

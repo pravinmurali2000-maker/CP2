@@ -6,69 +6,107 @@ This document provides a comprehensive overview of the Sports Tournament Manager
 
 The Sports Tournament Manager is a full-stack web application designed to facilitate the organization, management, and real-time tracking of sports tournaments. It supports various user roles (Admin, Manager) with distinct functionalities, including tournament setup, team and player management, automated match scheduling, live score updates, and real-time notifications to all viewers.
 
-## 2. Architecture Overview
+## 2. System Architecture
 
-The application is architected as a modern, decoupled JAMstack application. The frontend and backend are separate projects that are developed and deployed independently.
+The application is built on a modern, decoupled architecture that separates the frontend, backend, and database into distinct, independently deployable services. This design enhances scalability, maintainability, and performance.
 
--   **Frontend (Client)**: A single-page application (SPA) built with **React** (using Vite) and **TypeScript**. It provides a dynamic, interactive user interface and is deployed globally on **Netlify's CDN** for high performance.
--   **Backend (Server)**: A monolithic API server developed with **NestJS** and **TypeScript**. It exposes RESTful APIs, handles all business logic, manages user authentication, and provides real-time updates via WebSockets. It is deployed as a **Web Service on Render**.
--   **Database**: A **PostgreSQL** database managed by **Render's Managed PostgreSQL** service. This serves as the primary, persistent data store for the application.
+```mermaid
+graph TD
+    subgraph User's Browser
+        A[Frontend on Netlify]
+    end
 
-### 2.1 Technology Stack
+    subgraph Render Cloud
+        B(Backend on Render)
+        C(PostgreSQL on Render)
+    end
 
--   **Frontend**: React, TypeScript, Vite, TailwindCSS, shadcn/ui, Socket.IO Client.
--   **Backend**: NestJS, TypeScript, TypeORM, PostgreSQL, Passport.js (for JWT authentication), Socket.IO.
--   **Deployment**:
-    -   **Frontend:** Netlify (for hosting and CI/CD).
-    -   **Backend & Database:** Render (for hosting, CI/CD, and managed PostgreSQL).
+    A -- REST API (HTTPS) --> B
+    A -- WebSocket (WSS) --> B
+    B -- TCP/IP --> C
 
-### 2.2 Data Flow & Real-time Updates
+    style A fill:#00c7b7,stroke:#333,stroke-width:2px
+    style B fill:#4d92ff,stroke:#333,stroke-width:2px
+    style C fill:#f9d423,stroke:#333,stroke-width:2px
+```
 
-1.  **Initial Load**: A user accesses the frontend URL (hosted on Netlify). The React application fetches the initial tournament data from the backend API (hosted on Render).
-2.  **API Requests**: User actions (like an admin saving a match score) trigger secure API calls from the frontend to the backend.
-3.  **Backend Logic**: The NestJS backend processes the request, interacts with the PostgreSQL database (via TypeORM), and performs the necessary action.
-4.  **Real-time Broadcast**: After a significant change (like a score update), the backend uses a WebSocket gateway to broadcast the entire updated tournament object to all connected clients.
-5.  **Frontend Update**: The frontend receives the `tournament_updated` event and updates its global state, causing the UI to re-render with the new information in real-time, without requiring a page refresh.
+### 2.1 Components
 
-## 3. Frontend Functionality
+-   **Frontend (Client)**: A single-page application (SPA) built with **React** (using Vite) and **TypeScript**. It provides a dynamic, interactive user interface for all users.
+-   **Backend (Server)**: A monolithic API server developed with **NestJS** and **TypeScript**. It exposes RESTful APIs, handles all business logic, manages user authentication, and provides real-time updates via WebSockets.
+-   **Database**: A **PostgreSQL** database that serves as the primary, persistent data store for the application.
 
-The frontend application provides a dynamic user interface that adapts based on the user's authentication status and role.
+### 2.2 Hosting Environment
 
-### 3.1 Core Components and State Management (`src/App.tsx`)
+-   **Frontend (Netlify)**: The React frontend is deployed on **Netlify**. This provides:
+    -   **Global CDN**: For fast delivery of static assets (HTML, CSS, JavaScript) to users worldwide.
+    -   **Continuous Deployment**: Automatically deploys new versions of the frontend when changes are pushed to the `production` branch on GitHub.
+    -   **Environment Management**: Manages the `VITE_API_URL` environment variable, which tells the frontend how to communicate with the backend.
+-   **Backend & Database (Render)**: The backend server and database are both hosted on **Render**.
+    -   **Backend (Web Service)**: The NestJS application is deployed as a Render Web Service. It automatically restarts on failure and can be scaled as needed.
+    -   **Database (Managed PostgreSQL)**: Render provides a fully managed PostgreSQL instance, handling backups, security, and maintenance. The backend connects to the database via an internal, secure connection string (`DATABASE_URL`).
 
--   **`App.tsx`**: The main application component that manages global state (current page, current user, tournament data) and handles routing.
--   **`TournamentProvider` (`src/context/TournamentContext.tsx`)**: Fetches and manages the global `tournament` state via the `useTournament` hook, making it available to all child components.
--   **API URL**: The frontend is configured to communicate with the backend API via the `VITE_API_URL` environment variable, allowing for easy switching between local development and the live production backend.
+## 3. Communication Flow
 
-### (Sections 3.2, 3.3 for specific features remain largely the same)
+The components of the system communicate through two primary channels: REST API (for standard data requests) and WebSockets (for real-time updates).
 
-## 4. Backend Functionality
+### 3.1 REST API Communication (Request-Response)
 
-The backend is built with NestJS, providing a structured and modular approach to API development.
+The frontend communicates with the backend via standard HTTPS requests. This is used for actions like fetching data, logging in, or submitting changes.
 
-### 4.1 Modules
+**Example Flow: Admin Updates a Match Score**
 
--   **`AppModule`**: The root module, configuring global aspects like `ConfigModule` and `TypeOrmModule`.
--   **`AuthModule`**: Manages user authentication and JWT strategy.
--   **`TournamentsModule`**: Handles all operations related to tournaments, teams, players, schedules, and notifications.
--   **`MatchesModule`**: Manages operations specific to individual matches.
--   **`RealtimeModule`**: Integrates Socket.IO for real-time communication.
+1.  **User Action**: The Admin enters a new score on the "Live Score Input" page in the frontend application.
+2.  **API Request**: The frontend sends a `PUT` request to the backend API endpoint, for example: `PUT /api/matches/:matchId/score`. The request body contains the new score, and the `Authorization` header contains the Admin's JWT.
+3.  **Backend Processing**:
+    -   The NestJS backend receives the request.
+    -   The `JwtAuthGuard` and `RolesGuard` verify that the user is an authenticated Admin.
+    -   The `MatchesService` updates the match score in the PostgreSQL database via TypeORM.
+    -   The `StandingsService` is triggered to recalculate and update the points and goal difference for the involved teams.
+4.  **API Response**: The backend sends a success response (e.g., `200 OK`) back to the frontend, confirming that the score was updated.
 
-### 4.2 Database (TypeORM with PostgreSQL)
+### 3.2 WebSocket Communication (Real-time)
 
--   **Entities**: Defined in `src/database/entities`.
--   **Configuration**: `app.module.ts` is configured to connect to the database using a single `DATABASE_URL` environment variable, making it compatible with managed hosting services like Render. It's configured for PostgreSQL and includes SSL settings for secure connections.
--   **Seeding**: `backend/src/main.ts` includes a `seedDatabase` function that populates the database with an initial admin user, manager users, and a default tournament if the database is empty. This is crucial for the first deployment.
+For instant updates across all users' screens, the application uses WebSockets.
 
-### (Section 4.3 for API endpoints remains largely the same)
+**Example Flow: Broadcasting the Score Update**
 
-### 4.4 Real-time Communication (`RealtimeModule`)
+1.  **Backend Broadcast**: Immediately after updating the score in the database, the `MatchesService` calls the `RealtimeGateway`.
+2.  **WebSocket Event**: The `RealtimeGateway` emits a `tournament_updated` event to all connected clients in the specific tournament's "room". The event payload contains the entire, fresh `tournament` object, including the updated match and team standings.
+3.  **Frontend Update**:
+    -   Every connected client (admins, managers, public viewers) receives the `tournament_updated` event.
+    -   The `useTournament` hook in the React frontend updates its global state with the new tournament data.
+    -   React automatically re-renders all components that depend on this data (e.g., the `Standings` table, the `Fixtures` list), so every user sees the new score and updated standings instantly, without needing to refresh their page.
 
--   **`RealtimeGateway`**: A Socket.IO gateway that manages WebSocket connections.
--   **Events**:
-    -   `join_tournament_room`: Clients join a room for a specific tournament ID.
-    -   `tournament_updated`: Broadcasts the entire, updated tournament object to all clients in the room after a significant change (e.g., score update, match detail change). This is the primary mechanism for real-time UI updates.
-    -   `notification_sent`: Broadcasts new notifications.
+## 4. Core Features and API
+
+The application's functionality is exposed through a set of RESTful API endpoints, which are consumed by the frontend.
+
+### 4.1 User Authentication
+
+-   **`POST /login`**: Authenticates a user (Admin or Manager) and returns a JWT `access_token` and user details. This is the entry point for all protected actions.
+
+### 4.2 Tournament Management
+
+-   **`GET /api/tournaments/:id`**: Retrieves all data for a single tournament. This is the main data-loading endpoint for the frontend.
+-   **`PUT /api/tournaments/:id`**: Allows an Admin to update core tournament details like name, format, and status (`draft`, `live`, `completed`).
+
+### 4.3 Team & Player Management
+
+-   **`POST /api/tournaments/:id/teams`**: Allows an Admin or Manager to create a new team and its associated manager user.
+-   **`PUT /api/tournaments/:id/teams/:teamId`**: Updates a team's (and its manager's) details.
+-   **`DELETE /api/tournaments/:id/teams/:teamId`**: Deletes a team.
+-   **`POST`, `PUT`, `DELETE` on `/players` sub-routes**: Allows Admins and Managers to add, update, and remove players from their teams.
+
+### 4.4 Schedule & Score Management
+
+-   **`POST /api/tournaments/:id/schedule/generate`**: (Admin-only) Automatically generates a round-robin schedule for all teams in the tournament.
+-   **`PUT /api/matches/:matchId/score`**: (Admin-only) Updates the score of a match. This is a critical endpoint that also triggers the automatic recalculation of team standings.
+
+### 4.5 Real-time Notifications
+
+-   **`POST /api/tournaments/:id/notifications`**: (Admin-only) Creates a new notification. When called, the backend also broadcasts a `notification_sent` WebSocket event to all users, allowing for real-time alerts.
+-   **`DELETE /api/tournaments/:id/notifications/:notificationId`**: (Admin-only) Deletes a notification. When called, the backend broadcasts a `tournament_updated` WebSocket event to all users, ensuring the deleted notification is removed from everyone's view in real-time.
 
 ## 5. Deployment Guide
 
@@ -116,7 +154,7 @@ There are two methods: Git-based deployment (recommended) or manual deployment.
     -   **Publish directory:** `build` (as configured in `vite.config.ts`).
     -   **Environment Variable:**
         -   **Key:** `VITE_API_URL`
-        -   **Value:** `https://<your-render-url>/api` (e.g., `https://cp2-unfv.onrender.com/api`).
+        -   **Value:** `https://<your-render-url>/api`
 
 3.  **Deploy:**
     -   Click "Deploy site". Netlify will build and deploy the frontend. Any future push to the `production` branch will trigger an automatic redeployment.
@@ -125,7 +163,7 @@ There are two methods: Git-based deployment (recommended) or manual deployment.
 
 1.  **Create `.env.production` file:**
     -   In your local project root, create a file named `.env.production`.
-    -   Add one line: `VITE_API_URL=https://<your-render-url>/api`.
+    -   Add one line: VITE_API_URL=https://cp2-unfv.onrender.com/api
 
 2.  **Build Locally:**
     -   Run `npm install && npm run build` in your terminal. This will create a `build` folder.
